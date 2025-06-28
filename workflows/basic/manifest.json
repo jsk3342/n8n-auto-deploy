@@ -1,0 +1,49 @@
+{
+  "name": "Basic Automation Templates",
+  "description": "n8n 입문자를 위한 기본 자동화 워크플로우 모음",
+  "version": "1.0.0",
+  "difficulty": "beginner",
+  "estimated_setup_time": "10-15 minutes",
+  "workflows": [
+    {
+      "file": "ai-secretary-commute.json",
+      "name": "AI 비서 극존칭 출근 알림",
+      "description": "네이버 지도 + AI + 카카오톡으로 VIP 대우받는 출근 정보",
+      "requirements": [
+        "네이버 클라우드 플랫폼 API 키",
+        "카카오톡 API 키",
+        "OpenAI API 키"
+      ],
+      "tags": ["ai", "commute", "kakao", "naver", "schedule"]
+    },
+    {
+      "file": "simple-webhook-test.json",
+      "name": "간단한 웹훅 테스트",
+      "description": "n8n 웹훅의 기본 동작을 이해하기 위한 테스트 워크플로우",
+      "requirements": [],
+      "tags": ["webhook", "test", "beginner"]
+    },
+    {
+      "file": "daily-weather-report.json",
+      "name": "일일 날씨 알림",
+      "description": "매일 아침 날씨 정보를 슬랙/이메일로 전송",
+      "requirements": ["OpenWeatherMap API 키"],
+      "tags": ["weather", "daily", "notification"]
+    },
+    {
+      "file": "api-health-check.json",
+      "name": "API 상태 모니터링",
+      "description": "중요한 API 서버들의 상태를 주기적으로 체크하고 장애시 알림",
+      "requirements": [],
+      "tags": ["monitoring", "api", "health-check"]
+    }
+  ],
+  "setup_instructions": [
+    "1. n8n 설치 완료 후 브라우저에서 접속",
+    "2. 계정 생성 및 로그인",
+    "3. Settings → Import/Export → Import workflow 선택",
+    "4. 각 JSON 파일을 순서대로 임포트",
+    "5. 필요한 API 키들을 Credentials에 추가",
+    "6. 각 워크플로우를 Active 상태로 변경"
+  ]
+}
