@@ -58,19 +58,40 @@
 
 ### 2단계: 자동 설치 (5분)
 
-터미널에서 다음 명령어 한 줄만 실행하세요:
+**두 가지 방법 중 선택하세요:**
+
+#### 방법 A: 로컬 터미널에서 SSH 접속 (추천)
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/jsk3342/n8n-auto-deploy/main/install.sh | bash
 ```
 
-### 3단계: 정보 입력
-
-스크립트 실행 시 다음 정보를 입력하세요:
+#### 방법 B: AWS 웹 터미널에서 직접 실행 (키페어 없이)
 
 ```
+1. AWS 콘솔 → EC2 → 인스턴스 선택 → "연결" 버튼
+2. "EC2 Instance Connect" 선택 → "연결" 클릭
+3. 웹 터미널에서 다음 명령어 실행:
+```
+
+```bash
+curl -sSL https://raw.githubusercontent.com/jsk3342/n8n-auto-deploy/main/server-install.sh | bash
+```
+
+### 3단계: 정보 입력
+
+#### 방법 A 선택시:
+
+```
+연결 방식: 1 (SSH 클라이언트)
 탄력적 IP 주소: [1단계에서 할당받은 IP]
 키페어(.pem) 파일 경로: [다운로드한 .pem 파일 경로]
+n8n 관리자 비밀번호: [8자 이상 비밀번호]
+```
+
+#### 방법 B 선택시:
+
+```
 n8n 관리자 비밀번호: [8자 이상 비밀번호]
 ```
 

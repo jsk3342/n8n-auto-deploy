@@ -112,19 +112,56 @@ get_user_input() {
         warn_msg "올바른 IP 주소 형식이 아닙니다. (예: 13.54.40.102)"
     done
     
-    # 키페어 파일 경로
+    # 연결 방식 선택
+    echo ""
+    echo -e "${YELLOW}서버 연결 방식을 선택하세요:${NC}"
+    echo "1) SSH 클라이언트 (키페어 파일 사용)"
+    echo "2) AWS 웹 터미널에서 직접 실행"
+    echo ""
+    
     while true; do
-        read -p "키페어(.pem) 파일 경로: " KEY_PATH
-        # 물결표 확장
-        KEY_PATH="${KEY_PATH/#\~/$HOME}"
-        if [[ -f "$KEY_PATH" ]]; then
-            # 권한 확인 및 수정
-            chmod 400 "$KEY_PATH"
-            break
-        else
-            warn_msg "파일을 찾을 수 없습니다: $KEY_PATH"
-            echo "   힌트: 전체 경로를 입력하세요. (예: /Users/username/Downloads/my-key.pem)"
-        fi
+        read -p "선택 (1 또는 2): " CONNECTION_TYPE
+        case $CONNECTION_TYPE in
+            1)
+                CONNECTION_METHOD="ssh"
+                # 키페어 파일 경로
+                while true; do
+                    read -p "키페어(.pem) 파일 경로: " KEY_PATH
+                    # 물결표 확장
+                    KEY_PATH="${KEY_PATH/#\~/$HOME}"
+                    if [[ -f "$KEY_PATH" ]]; then
+                        # 권한 확인 및 수정
+                        chmod 400 "$KEY_PATH"
+                        break
+                    else
+                        warn_msg "파일을 찾을 수 없습니다: $KEY_PATH"
+                        echo "   힌트: 전체 경로를 입력하세요. (예: /Users/username/Downloads/my-key.pem)"
+                    fi
+                done
+                break
+                ;;
+            2)
+                CONNECTION_METHOD="web"
+                echo ""
+                echo -e "${CYAN}웹 터미널 연결 방법:${NC}"
+                echo "1. AWS 콘솔 → EC2 → 인스턴스 선택"
+                echo "2. '연결' 버튼 → 'EC2 Instance Connect' 선택" 
+                echo "3. '연결' 클릭하여 웹 터미널 열기"
+                echo "4. 아래 명령어를 웹 터미널에서 실행:"
+                echo ""
+                echo -e "${GREEN}curl -sSL https://raw.githubusercontent.com/jsk3342/n8n-auto-deploy/main/server-install.sh | bash${NC}"
+                echo ""
+                read -p "위 과정을 완료했습니까? (y/N): " web_confirm
+                if [[ ! "$web_confirm" =~ ^[Yy]$ ]]; then
+                    warn_msg "웹 터미널에서 설치를 완료한 후 다시 실행해주세요."
+                    exit 1
+                fi
+                break
+                ;;
+            *)
+                warn_msg "1 또는 2를 선택해주세요."
+                ;;
+        esac
     done
     
     # n8n 관리자 비밀번호
