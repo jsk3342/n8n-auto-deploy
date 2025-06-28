@@ -55,14 +55,14 @@
 ### 원클릭 설치
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/n8n-auto-deploy/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/jsk3342/n8n-auto-deploy/main/install.sh | bash
 ```
 
 ### 수동 다운로드 후 실행
 
 ```bash
 # 스크립트 다운로드
-wget https://raw.githubusercontent.com/YOUR_USERNAME/n8n-auto-deploy/main/install.sh
+wget https://raw.githubusercontent.com/jsk3342/n8n-auto-deploy/main/install.sh
 
 # 실행 권한 부여
 chmod +x install.sh
@@ -286,7 +286,7 @@ sudo journalctl -u docker -f
 
 ### 문제 신고
 
-- [GitHub Issues](https://github.com/YOUR_USERNAME/n8n-auto-deploy/issues)에서 문제를 신고해주세요.
+- [GitHub Issues](https://github.com/jsk3342/n8n-auto-deploy/issues)에서 문제를 신고해주세요.
 
 ### 커뮤니티
 
