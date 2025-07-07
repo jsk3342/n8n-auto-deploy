@@ -1,0 +1,322 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": null,
+              "triggerAtDay": [1, 2, 3, 4, 5],
+              "triggerAtHour": 7,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-940, 100],
+      "id": "463d1aa1-9f6f-44d3-b0a2-9046da4de269",
+      "name": "🌅 오전 출근 알림 (7:30)"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": {},
+              "triggerAtDay": [1, 2, 3, 4, 5],
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-940, 400],
+      "id": "4b4e92da-b885-4229-b781-bdf89c90fa5f",
+      "name": "🌆 오후 퇴근 알림 (18:00)",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "serviceKey",
+              "value": "{{ $vars.WEATHER_API_KEY }}"
+            },
+            {
+              "name": "pageNo",
+              "value": "1"
+            },
+            {
+              "name": "numOfRows",
+              "value": "60"
+            },
+            {
+              "name": "dataType",
+              "value": "JSON"
+            },
+            {
+              "name": "base_date",
+              "value": "={{ $now.format('yyyyMMdd') }}"
+            },
+            {
+              "name": "base_time",
+              "value": "={{ $now.format('HH00') }}"
+            },
+            {
+              "name": "nx",
+              "value": "{{ $vars.WEATHER_GRID_X }}"
+            },
+            {
+              "name": "ny",
+              "value": "{{ $vars.WEATHER_GRID_Y }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-720, 350],
+      "id": "1a7dfb8d-610b-46f7-b7d6-d13ce124677e",
+      "name": "🌤️ 기상청 초단기예보 API"
+    },
+    {
+      "parameters": {
+        "url": "https://maps.apigw.ntruss.com/map-direction/v1/driving",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "start",
+              "value": "{{ $vars.START_COORDINATES }}"
+            },
+            {
+              "name": "goal",
+              "value": "{{ $vars.END_COORDINATES }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-NCP-APIGW-API-KEY-ID",
+              "value": "{{ $vars.NAVER_API_KEY_ID }}"
+            },
+            {
+              "name": "X-NCP-APIGW-API-KEY",
+              "value": "{{ $vars.NAVER_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-720, 160],
+      "id": "0d7f0c43-e55c-4c65-b468-fe440faafe76",
+      "name": "🚗 네이버 교통정보 API"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [-500, 250],
+      "id": "0debea75-fa5c-4e35-906b-e95bd7c2d4ad",
+      "name": "📊 데이터 병합"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 교통정보와 날씨정보 통합 처리\nconst { route: trafficData, response: weatherData, currentDateTime } = $input.all()[0].json;\n\n// 교통정보 파싱\nconst parseTrafficData = (data) => {\n  const route = data?.traoptimal?.[0];\n  if (!route) return { duration: 0, distance: 0, tollFare: 0, roadSections: [] };\n  \n  const { duration = 0, distance = 0, tollFare = 0 } = route.summary || {};\n  const roadSections = (route.section || [])\n    .slice(0, 3)\n    .map(({ name = '구간명 없음', congestion = 0 }) => ({ name, congestion }));\n  \n  return {\n    duration: Math.round(duration / 60000),\n    distance: Math.round(distance / 1000 * 10) / 10,\n    tollFare,\n    roadSections\n  };\n};\n\n// 혼잡도 텍스트 변환\nconst getCongestionText = (level) => ['원활', '서행', '지체', '정체'][level] || '정보없음';\n\n// 데이터 파싱 실행\nconst traffic = parseTrafficData(trafficData);\n\n// 도로 상황 요약 생성\nconst roadSummary = traffic.roadSections\n  .map(({ name, congestion }) => \n    `${congestion <= 1 ? '✅' : '⚠️'} ${name}: ${getCongestionText(congestion)}`)\n  .join('\\n');\n\n// 최종 데이터 반환\nreturn [{\n  json: {\n    currentDateTime,\n    traffic: {\n      ...traffic,\n      roadSummary\n    },\n    weatherRawData: weatherData,\n    debugInfo: {\n      trafficDataExists: !!trafficData,\n      weatherDataExists: !!weatherData,\n      weatherItemCount: weatherData?.body?.items?.item?.length || 0,\n      executionTime: currentDateTime\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-280, 250],
+      "id": "621093a8-85a7-4de6-a90f-95ac873736a8",
+      "name": "⚙️ 데이터 통합 처리기"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "다음 통합된 출퇴근 정보를 바탕으로 극존칭 비서 톤의 종합 보고서를 작성해주세요.\n\n이름: {{ $vars.USER_NAME }}\n현재 시간: {{ $json.currentDateTime }}\n\n🌤️ 날씨 예보 원본 데이터:\n{{ JSON.stringify($json.weatherRawData, null, 2) }}\n\n🚗 교통 정보:\n- 예상 소요시간: {{ $json.traffic.duration }}분\n- 총 거리: {{ $json.traffic.distance }}km  \n- 통행료: {{ $json.traffic.tollFare }}원\n- 도로 상황:\n{{ $json.traffic.roadSummary }}\n\n작성 규칙:\n1. \"👑 {{ $vars.USER_NAME }}회장님\"으로 시작\n2. 시간대별 인사말:\n   - 오전 6-10시: \"상쾌한 아침을 맞이하셨습니다\"\n   - 오전 10-오후 3시: \"오늘도 빛나는 하루를 보내고 계시는군요\"  \n   - 오후 3-7시: \"오늘 하루도 대단히 수고 많으셨습니다\"\n   - 오후 7시 이후: \"편안한 저녁 시간을 보내고 계시는군요\"\n\n3. 날씨 정보 처리 원칙:\n   - 기온(T1H)만 언급, 적정 복장 권장\n   - 강수가 예상될 때만 우산 언급 (PTY > 0 또는 RN1 != \"강수없음\")\n   - 하늘상태(SKY): 1=맑음☀️, 3=구름많음⛅, 4=흐림☁️\n   - 바람이 강할 때만 언급 (WSD > 3)\n   - 전문용어(PTY, SKY, REH 등) 절대 사용 금지\n   - 불필요한 상세 수치 나열 금지\n\n4. 극존칭 표현: \"회장님의 소중한 시간\", \"최적의 경로\", \"완벽한 일정\"\n5. 어미: \"~습니다\", \"~드립니다\", \"~께서는\"\n6. 이모지 적절히 활용: 👑 🚗 ✨ 💎 🌤️ ☔ 🌡️\n7. 볼드 마크다운 절대 금지\n8. {{ $vars.START_LOCATION }} → {{ $vars.END_LOCATION }} 이동 명시\n9. 통행료: 콤마 포함 원화 표기\n10. 성공적인 하루 기원으로 마무리\n\n중요: 실제로 필요한 정보만 간결하게 전달하세요.\n\n출력: 순수 텍스트 형태의 완성된 보고서",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [-60, 250],
+      "id": "b780406e-65f4-43d8-a108-65bff7d7326f",
+      "name": "🤖 AI 비서 보고서"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [28, 470],
+      "id": "ae9e3884-1d6d-4968-9f77-677ad5cb8886",
+      "name": "🧠 Gemini Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "tOtyVIt3BE8c7XfC",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://kapi.kakao.com/v2/api/talk/memo/default/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded;charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "template_object",
+              "value": "={{ JSON.stringify({\n  object_type: \"text\",\n  text: $json.text,\n  link: {\n    web_url: \"https://map.naver.com\",\n    mobile_web_url: \"https://map.naver.com\"\n  }\n}) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [316, 250],
+      "id": "d8dbe770-ba02-4e0f-bafb-96a2387ab63e",
+      "name": "📱 카카오톡 전송",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "0kVjwCQu1KUDuZTZ",
+          "name": "Unnamed credential"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "🌅 오전 출근 알림 (7:30)": {
+      "main": [
+        [
+          {
+            "node": "🚗 네이버 교통정보 API",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🌤️ 기상청 초단기예보 API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🌆 오후 퇴근 알림 (18:00)": {
+      "main": [
+        [
+          {
+            "node": "🚗 네이버 교통정보 API",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🌤️ 기상청 초단기예보 API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🌤️ 기상청 초단기예보 API": {
+      "main": [
+        [
+          {
+            "node": "📊 데이터 병합",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "🚗 네이버 교통정보 API": {
+      "main": [
+        [
+          {
+            "node": "📊 데이터 병합",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 데이터 병합": {
+      "main": [
+        [
+          {
+            "node": "⚙️ 데이터 통합 처리기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ 데이터 통합 처리기": {
+      "main": [
+        [
+          {
+            "node": "🤖 AI 비서 보고서",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 AI 비서 보고서": {
+      "main": [
+        [
+          {
+            "node": "📱 카카오톡 전송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 Gemini Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "🤖 AI 비서 보고서",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "5671ebcf820840297566e443db0ad989573594bf66ccef73794df09194127fef"
+  }
+}
