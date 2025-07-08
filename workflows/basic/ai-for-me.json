@@ -56,7 +56,7 @@
             },
             {
               "name": "numOfRows",
-              "value": "60"
+              "value": "600"
             },
             {
               "name": "dataType",
@@ -68,7 +68,7 @@
             },
             {
               "name": "base_time",
-              "value": "={{ $now.format('HH00') }}"
+              "value": "={{ $now.minus({ hours: 2 }).format('HH00') }}"
             },
             {
               "name": "nx",
@@ -150,7 +150,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "다음 통합된 출퇴근 정보를 바탕으로 극존칭 비서 톤의 종합 보고서를 작성해주세요.\n\n이름: {{ $vars.USER_NAME }}\n현재 시간: {{ $json.currentDateTime }}\n\n🌤️ 날씨 예보 원본 데이터:\n{{ JSON.stringify($json.weatherRawData, null, 2) }}\n\n🚗 교통 정보:\n- 예상 소요시간: {{ $json.traffic.duration }}분\n- 총 거리: {{ $json.traffic.distance }}km  \n- 통행료: {{ $json.traffic.tollFare }}원\n- 도로 상황:\n{{ $json.traffic.roadSummary }}\n\n작성 규칙:\n1. \"👑 {{ $vars.USER_NAME }}회장님\"으로 시작\n2. 시간대별 인사말:\n   - 오전 6-10시: \"상쾌한 아침을 맞이하셨습니다\"\n   - 오전 10-오후 3시: \"오늘도 빛나는 하루를 보내고 계시는군요\"  \n   - 오후 3-7시: \"오늘 하루도 대단히 수고 많으셨습니다\"\n   - 오후 7시 이후: \"편안한 저녁 시간을 보내고 계시는군요\"\n\n3. 날씨 정보 처리 원칙:\n   - 기온(T1H)만 언급, 적정 복장 권장\n   - 강수가 예상될 때만 우산 언급 (PTY > 0 또는 RN1 != \"강수없음\")\n   - 하늘상태(SKY): 1=맑음☀️, 3=구름많음⛅, 4=흐림☁️\n   - 바람이 강할 때만 언급 (WSD > 3)\n   - 전문용어(PTY, SKY, REH 등) 절대 사용 금지\n   - 불필요한 상세 수치 나열 금지\n\n4. 극존칭 표현: \"회장님의 소중한 시간\", \"최적의 경로\", \"완벽한 일정\"\n5. 어미: \"~습니다\", \"~드립니다\", \"~께서는\"\n6. 이모지 적절히 활용: 👑 🚗 ✨ 💎 🌤️ ☔ 🌡️\n7. 볼드 마크다운 절대 금지\n8. {{ $vars.START_LOCATION }} → {{ $vars.END_LOCATION }} 이동 명시\n9. 통행료: 콤마 포함 원화 표기\n10. 성공적인 하루 기원으로 마무리\n\n중요: 실제로 필요한 정보만 간결하게 전달하세요.\n\n출력: 순수 텍스트 형태의 완성된 보고서",
+        "text": "다음 통합된 출퇴근 정보를 바탕으로 극존칭 비서 톤의 종합 보고서를 작성해주세요.\n\n이름: [이름]\n현재 시간: {{ $json.currentDateTime }}\n\n🌤️ 날씨 예보 원본 데이터:\n{{ JSON.stringify($json.weatherRawData, null, 2) }}\n\n🚗 교통 정보:\n- 예상 소요시간: {{ $json.traffic.duration }}분\n- 총 거리: {{ $json.traffic.distance }}km  \n- 통행료: {{ $json.traffic.tollFare }}원\n- 도로 상황:\n{{ $json.traffic.roadSummary }}\n\n작성 규칙:\n1. \"👑 [이름] 회장님\"으로 시작\n2. 시간대별 인사말:\n   - 오전 6-10시: \"상쾌한 아침을 맞이하셨습니다\"\n   - 오전 10-오후 3시: \"오늘도 빛나는 하루를 보내고 계시는군요\"  \n   - 오후 3-7시: \"오늘 하루도 대단히 수고 많으셨습니다\"\n   - 오후 7시 이후: \"편안한 저녁 시간을 보내고 계시는군요\"\n\n3. 날씨 정보 처리 원칙:\n   - 기온(T1H)만 언급, 적정 복장 권장\n   - 강수가 예상될 때만 우산 언급 (PTY > 0 또는 RN1 != \"강수없음\")\n   - 하늘상태(SKY): 1=맑음☀️, 3=구름많음⛅, 4=흐림☁️\n   - 바람이 강할 때만 언급 (WSD > 3)\n   - 전문용어(PTY, SKY, REH 등) 절대 사용 금지\n   - 불필요한 상세 수치 나열 금지\n\n4. 극존칭 표현: \"회장님의 소중한 시간\", \"최적의 경로\", \"완벽한 일정\"\n5. 어미: \"~습니다\", \"~드립니다\", \"~께서는\"\n6. 이모지 적절히 활용: 👑 🚗 ✨ 💎 🌤️ ☔ 🌡️\n7. 볼드 마크다운 절대 금지\n8. {{ $vars.START_LOCATION }} → {{ $vars.END_LOCATION }} 이동 명시\n9. 통행료: 콤마 포함 원화 표기\n10. 성공적인 하루 기원으로 마무리\n\n중요: 실제로 필요한 정보만 간결하게 전달하세요.\n\n출력: 순수 텍스트 형태의 완성된 보고서",
         "batching": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
